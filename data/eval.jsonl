@@ -1,0 +1,3 @@
+{"question":"chip-api CPU 飙高先查哪里?","answer":"先看上游 chip-auth 的 redis 连接与 QPS。","contexts":["chip-api 的 CPU 飙高常由上游 chip-auth 鉴权慢引起，先看 auth 的 redis 连接与 QPS。"],"ground_truth":"chip-auth 的 redis 与 QPS"}
+{"question":"OutOfMemoryError 在 chip-worker 如何处理?","answer":"限流或临时扩容。","contexts":["OutOfMemoryError 在 chip-worker 常与批量推理任务并发度过高相关，建议限流或临时扩容。"],"ground_truth":"限流或扩容"}
+{"question":"mysql-defect 慢查询排查?","answer":"优先检查 chip-db-proxy 的连接池配置与 slow_log。","contexts":["mysql-defect 出现慢查询时，优先检查 chip-db-proxy 的连接池配置与 slow_log。"],"ground_truth":"db-proxy 连接池与 slow_log"}

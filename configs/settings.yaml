@@ -1,0 +1,61 @@
+app:
+  env: dev
+  log_level: INFO
+
+kafka:
+  bootstrap_servers: "localhost:9092"
+  security_protocol: PLAINTEXT
+
+milvus:
+  uri: "http://localhost:19530"
+  collections:
+    knowledge: kb_main
+    user_profile: user_profile
+
+neo4j:
+  uri: "bolt://localhost:7687"
+  user: neo4j
+  password: "test12345"
+
+redis:
+  url: "redis://localhost:6379/0"
+
+llm:
+  provider: openai_compatible
+  base_url: "https://api.openai.com/v1"
+  api_key: "sk-xxxx"
+  model: "gpt-4o-mini"
+  timeout: 30
+
+embedding:
+  model: "bge-m3"
+  dim: 1024
+
+rerank:
+  model: "bge-reranker-v2-m3"
+  top_n: 5
+
+rag:
+  bm25:
+    analyzer: "jieba"
+  cache:
+    ttl: 3600
+    distance_threshold: 0.08
+
+memory:
+  short_window: 10
+
+monitor:
+  interval_seconds: 30
+  log_rules:
+    - pattern: "(?i)panic|fatal"
+      severity: P1
+    - pattern: "OutOfMemoryError"
+      severity: P0
+    - pattern: "(?i)connection\\s+refused"
+      severity: P2
+
+resilience:
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout: 30

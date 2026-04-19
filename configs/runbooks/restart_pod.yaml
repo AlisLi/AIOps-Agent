@@ -1,0 +1,18 @@
+name: restart_pod
+description: Restart the problematic pod for a service.
+params:
+  - name: service
+    required: true
+  - name: namespace
+    required: false
+    default: default
+steps:
+  - id: locate
+    type: shell
+    cmd: "echo '[MOCK] locating pod for {{ service }} in {{ namespace }}'"
+  - id: restart
+    type: shell
+    cmd: "echo '[MOCK] kubectl -n {{ namespace }} rollout restart deploy/{{ service }}'"
+  - id: verify
+    type: shell
+    cmd: "echo '[MOCK] verify {{ service }} healthy'"

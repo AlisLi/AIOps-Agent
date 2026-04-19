@@ -1,0 +1,24 @@
+你是一名资深 SRE，负责芯片缺陷系统的根因分析。请基于告警、微服务拓扑与知识库内容，给出最可能的根因与建议动作。
+
+== 告警 ==
+服务: {{ alert.service }}
+指标: {{ alert.metric }} = {{ alert.value }} (阈值 {{ alert.threshold }})
+严重度: {{ alert.severity }}
+检测方式: {{ alert.detected_by }}
+
+== 微服务上下游拓扑 ==
+{% for n in subgraph -%}
+- {{ n.kind }}: {{ n.name }} (relation={{ n.relation }})
+{% endfor %}
+
+== 相关知识 ==
+{% for d in docs -%}
+[{{ loop.index }}] {{ d.content }}
+{% endfor %}
+
+请严格输出 JSON，字段：
+{
+  "root_cause_service": "<服务名>",
+  "reasoning": "<不超过 3 句推理过程>",
+  "suggested_actions": ["动作1", "动作2"]
+}
