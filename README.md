@@ -63,10 +63,6 @@ python examples/chat_demo.py
 python examples/alert_demo.py
 ```
 
-## 目录结构
-
-见 `SPEC.md` 第 3 节。
-
 ## 测试
 
 ```bash
