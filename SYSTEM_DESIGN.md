@@ -32,11 +32,11 @@
 
 ## 2. 核心技术栈
 
-系统主语言为 **Python 3.11+**，围绕异步 I/O 展开，所有外部调用（LLM、向量库、图库、消息队列）均使用 `async`/`await`。LLM 能力通过 **LangChain 0.3.x** 封装，多 Agent 的状态机和分支控制通过 **LangGraph 0.2.x** 表达，使 QA 的"加载记忆 → 分类 → 检索 → 生成 → 更新记忆"流程可在一张有向图里显式声明。服务入口采用 **FastAPI + Uvicorn**，对外提供 REST 与 SSE 流式接口。
+系统主语言为 **Python**，围绕异步 I/O 展开，所有外部调用（LLM、向量库、图库、消息队列）均使用 `async`/`await`。LLM 能力通过LangChain封装，多 Agent 的状态机和分支控制通过LangGraph表达，使 QA 的"加载记忆 → 分类 → 检索 → 生成 → 更新记忆"流程可在一张有向图里显式声明。服务入口采用 FastAPI，对外提供 REST 与 SSE 流式接口。
 
-在数据底座上，**Kafka**（confluent-kafka-python 2.5.x）承担异步事件总线，为 5 个 Agent 之间的请求/响应/告警提供解耦和重放能力；**Milvus 2.4.x** 负责知识向量与用户画像向量的存储与 ANN 检索；**Neo4j 5.x** 承担微服务拓扑知识图谱，用 Cypher 快速查询告警服务的上下游；**Redis Stack 7.2.x** 同时扮演两个角色——既是短期对话记忆的 KV 存储，也是语义缓存的 HNSW 向量索引（依赖 RediSearch）。
+在数据底座上，**Kafka** 承担异步事件总线，为 5 个 Agent 之间的请求/响应/告警提供解耦和重放能力；Milvus负责知识向量与用户画像向量的存储与 ANN 检索；Neo4j承担微服务拓扑知识图谱，用 Cypher 快速查询告警服务的上下游；Redis Stack同时扮演两个角色——既是短期对话记忆的 KV 存储，也是语义缓存的 HNSW 向量索引（依赖 RediSearch）。
 
-嵌入与重排使用 **bge-m3** 与 **bge-reranker-v2-m3**，均支持中英双语并在中文语料上效果稳定；BM25 通路使用 `rank-bm25` 配合 `jieba` 分词，用于对日志关键字类查询做精准字面匹配。评估环节接入 **RAGAS 0.2.x**，覆盖 faithfulness、answer relevancy、context precision、context recall 四项标准检索-生成指标。高可用部分使用 **tenacity** 做差异化重试，配合自研的三态熔断器。配置通过 **pydantic-settings** 与 YAML 双层覆盖，日志通过 **loguru** 的 `contextualize` 把 `trace_id` 注入到每条日志中。
+嵌入与重排使用bge-m3与bge-reranker-v2-m3，均支持中英双语并在中文语料上效果稳定；BM25 通路使用 `rank-bm25` 配合 `jieba` 分词，用于对日志关键字类查询做精准字面匹配。评估环节接入RAGAS，覆盖 faithfulness、answer relevancy、context precision、context recall 四项标准检索-生成指标。高可用部分做差异化重试，配合自研的三态熔断器。配置通过YAML覆盖，日志通过 **loguru** 的 `contextualize` 把 `trace_id` 注入到每条日志中。
 
 基础设施统一以 **Docker Compose** 编排，开发者一条命令即可拉起完整依赖环境。
 
@@ -447,9 +447,9 @@ flowchart TD
 
 ## 6. 关键时序流程
 
-**问答时序**：用户调用 `/chat` → Gateway 生成 `trace_id` 并调用 `QAAgent.answer()` → LangGraph 依次执行 `load_memory`（读 Redis 摘要 + 近期消息、读 Milvus 用户画像）→ `classify`（规则路由器定类别）→ `retrieve`（调 RAG 管道：语义缓存命中或走混合检索 + RRF + Rerank）→ `generate`（填 Jinja 模板、调 LLM）→ `update_memory`（回写 Redis，异步更新用户画像）→ 返回 `QAResponse`。整个链路每一步都 `with log.contextualize(trace_id=...)`，日志可全链路追踪。
+**问答时序**：用户调用 `/chat` → Gateway 生成 `trace_id` 并调用 `QAAgent.answer()` → LangGraph 依次执行 `load_memory`（读 Redis 摘要 + 近期消息、读 Milvus 用户画像）→ `classify`（规则路由器定类别）→ `retrieve`（调 RAG 管道：语义缓存命中或走混合检索 + RRF + Rerank）→ `generate`（填模板、调 LLM）→ `update_memory`（回写 Redis，异步更新用户画像）→ 返回 `QAResponse`。整个链路每一步都 `with log.contextualize(trace_id=...)`，日志可全链路追踪。
 
-**运维时序**：Monitor Agent 的后台协程定期拉取 CPU 指标 → `AnomalyDetector.vote(x)` 判异 → 构造 `AlertEvent` 发布到 `alert.raw` → RCA Agent 消费，先从 Neo4j 取邻居拓扑，再调 RAG 找相关经验，最后让 LLM 输出 JSON 根因 → RCA Agent 把 `RCAResult` 发到 `rca.result`，把 `HealRequest` 发到 `heal.request`（runbook 名取自 `suggested_actions[0]`）→ Heal Agent 消费、加载 YAML Runbook、Jinja 渲染每一步命令并执行 → 把 `HealResult` 发到 `heal.result`。一次事件产生的所有消息共享同一 `alert_id`，可在 Kafka 里完整串起全链路。
+**运维时序**：Monitor Agent 的后台协程定期拉取 CPU 指标 → `AnomalyDetector.vote(x)` 判异 → 构造 `AlertEvent` 发布到 `alert.raw` → RCA Agent 消费，先从 Neo4j 取邻居拓扑，再调 RAG 找相关经验，最后让 LLM 输出 JSON 根因 → RCA Agent 把 `RCAResult` 发到 `rca.result`，把 `HealRequest` 发到 `heal.request`（runbook 名取自 `suggested_actions[0]`）→ Heal Agent 消费、加载 YAML渲染每一步命令并执行 → 把 `HealResult` 发到 `heal.result`。一次事件产生的所有消息共享同一 `alert_id`，可在 Kafka 里完整串起全链路。
 
 ---
 
