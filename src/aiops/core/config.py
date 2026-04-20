@@ -12,6 +12,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT = Path(__file__).resolve().parents[3]
 CONFIG_FILE = ROOT / "configs" / "settings.yaml"
+ENV_FILE = ROOT / ".env"
+
+# 把 .env 里的值写进 os.environ，这样下面的 _apply_env_overrides 才能读到。
+# pydantic-settings 的 env_file 只作用于 Settings 字段本身，不会注入全局环境变量。
+try:
+    from dotenv import load_dotenv
+
+    if ENV_FILE.exists():
+        load_dotenv(ENV_FILE, override=False)
+except ImportError:  # python-dotenv 理论上是 pydantic-settings 的依赖，兜底一下
+    pass
 
 
 class AppCfg(BaseModel):

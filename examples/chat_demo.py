@@ -9,10 +9,18 @@ Run:
 from __future__ import annotations
 
 import asyncio
+import sys
 import uuid
+from pathlib import Path
 
-from aiops.agents.qa_agent import QAAgent
-from scripts.seed_knowledge import main as seed
+# 让 `scripts` 和 `src/aiops` 都能被直接 `python examples/xxx.py` 找到
+_ROOT = Path(__file__).resolve().parent.parent
+for p in (_ROOT, _ROOT / "src"):
+    if str(p) not in sys.path:
+        sys.path.insert(0, str(p))
+
+from aiops.agents.qa_agent import QAAgent  # noqa: E402
+from scripts.seed_knowledge import main as seed  # noqa: E402
 
 
 async def main() -> None:

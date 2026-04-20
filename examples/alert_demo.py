@@ -7,13 +7,21 @@ Run:
 from __future__ import annotations
 
 import asyncio
+import sys
 import uuid
 from datetime import datetime
+from pathlib import Path
 
-from aiops.core.types import AlertEvent, HealRequest
-from aiops.heal.executor import get_executor
-from aiops.rca.analyzer import RCAAnalyzer
-from scripts.seed_knowledge import main as seed
+# 让 `scripts` 和 `src/aiops` 都能被直接 `python examples/xxx.py` 找到
+_ROOT = Path(__file__).resolve().parent.parent
+for p in (_ROOT, _ROOT / "src"):
+    if str(p) not in sys.path:
+        sys.path.insert(0, str(p))
+
+from aiops.core.types import AlertEvent, HealRequest  # noqa: E402
+from aiops.heal.executor import get_executor  # noqa: E402
+from aiops.rca.analyzer import RCAAnalyzer  # noqa: E402
+from scripts.seed_knowledge import main as seed  # noqa: E402
 
 
 async def main() -> None:
