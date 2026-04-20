@@ -19,7 +19,7 @@ case "$CMD" in
   up)
     need docker
     echo "[+] starting infra: kafka, redis-stack, milvus, neo4j ..."
-    docker compose up -d zookeeper kafka redis etcd minio milvus neo4j
+    docker compose up -d kafka redis etcd minio milvus neo4j
     echo "[+] waiting 15s for services to warm up ..."
     sleep 15
     docker compose ps
